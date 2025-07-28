@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1080814063797",
+    "project_id": "bruh-22abb",
+    "storage_bucket": "bruh-22abb.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1080814063797:android:a0ae64cbd805c9dade6efc",
+        "android_client_info": {
+          "package_name": "com.example.bruh"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBHNz5xBwzELu_jcSthLFXvv8ZARz82tNI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
