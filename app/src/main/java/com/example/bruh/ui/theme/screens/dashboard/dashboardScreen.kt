@@ -56,6 +56,7 @@ import androidx.navigation.compose.rememberNavController
 import com.example.bruh.R
 import com.example.bruh.navigation.ROUTE_ADDPATIENT
 import com.example.bruh.navigation.ROUTE_LOGIN
+import com.example.bruh.navigation.ROUTE_VIEWPATIENTS
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -132,7 +133,9 @@ fun dashboardScreen(navController: NavController){
                }
                Spacer(modifier = Modifier.width(30.dp))
                Card (
-                   modifier = Modifier.padding(10.dp).clickable {  },
+                   modifier = Modifier.padding(10.dp).clickable {
+                       navController.navigate((ROUTE_VIEWPATIENTS))
+                   },
                    shape = RoundedCornerShape(20.dp),
                    elevation = CardDefaults.cardElevation(10.dp),
                    colors = CardDefaults.cardColors(Color.White)

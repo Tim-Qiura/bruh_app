@@ -6,6 +6,7 @@ import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -18,9 +19,11 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -44,55 +47,91 @@ import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
 import com.example.bruh.R
 import com.example.bruh.data.PatientViewModel
+import com.example.bruh.models.Patient
 import com.example.bruh.navigation.ROUTE_DASHBOARD
 import com.example.bruh.ui.theme.screens.register.registerScreen
+import com.google.firebase.database.FirebaseDatabase
+import kotlinx.coroutines.tasks.await
+import androidx.core.net.toUri
+import com.example.bruh.navigation.ROUTE_VIEWPATIENTS
 
 @Composable
-fun AddPatientScreen(navController: NavController){
-    var name by remember { mutableStateOf("") }
-    var gender by remember { mutableStateOf("") }
-    var nationality by remember { mutableStateOf("")}
-    var age by remember { mutableStateOf("") }
-    var diagnosis by remember { mutableStateOf("") }
-    var phone_number by remember { mutableStateOf("") }
-    val imageUri = rememberSaveable() { mutableStateOf<Uri?>(null) }
-    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) {
-        uri:Uri?-> uri?.let { imageUri.value=it }
-    }
+fun UpdatePatientScreen(navController: NavController, patientId:String){
     val patientViewModel: PatientViewModel = viewModel()
+    var patient by remember { mutableStateOf<Patient?>(null) }
+    LaunchedEffect(patientId) {
+        val ref = FirebaseDatabase.getInstance().getReference("Patients").child(patientId)
+        val snapshot = ref.get().await()
+        patient = snapshot.getValue(Patient::class.java)?.apply {
+            id = patientId
+        }
+
+//        loadedPatient?.let {
+//            patient = it
+//
+//            // ✅ Set imageUri if imageUrl is available
+//            if (!it.imageUrl.isNullOrEmpty()) {
+//                imageUri.value = it.imageUrl.toUri()
+//            }
+//        }
+    }
+    if (patient==null){
+        Box(modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center){
+            CircularProgressIndicator()
+        }
+        return
+    }
+
+
+
+
+    var name by remember { mutableStateOf(patient!!.name ?:"") }
+    var gender by remember { mutableStateOf(patient!!.gender ?:"") }
+    var nationality by remember { mutableStateOf(patient!!.nationality ?:"")}
+    var age by remember { mutableStateOf(patient!!.age ?:"") }
+    var diagnosis by remember { mutableStateOf(patient!!.diagnosis?:"") }
+    var phone_number by remember { mutableStateOf(patient!!.phone_number?:"") }
+//    val imageUri = remember() { mutableStateOf<Uri?>(null) }
+    val imageUri= remember{ mutableStateOf<Uri?>(null) }
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) {
+        it?.let { uri -> imageUri.value=uri }
+    }
+
+
     val context = LocalContext.current
     Column(
         modifier = Modifier.fillMaxSize().padding(10.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ){
-    Text(text = "Add New Patient",
-        fontStyle = FontStyle.Normal,
-        fontWeight = FontWeight.Bold,
-        fontSize = 26.sp,
-        textAlign = TextAlign.Center,
-        color = Color.Magenta,
-        modifier = Modifier.fillMaxWidth()
-    )
-    Card (shape = CircleShape, modifier = Modifier.padding(10.dp).size(200.dp)){
-        AsyncImage(model = imageUri.value ?: R.drawable.ic_person,
-            contentDescription = null,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier.size(200.dp).clickable {
-                launcher.launch("image/*")
-            })
+        Text(text = "Update Patient",
+            fontStyle = FontStyle.Normal,
+            fontWeight = FontWeight.Bold,
+            fontSize = 26.sp,
+            textAlign = TextAlign.Center,
+            color = Color.Magenta,
+            modifier = Modifier.fillMaxWidth()
+        )
+        Card (shape = CircleShape, modifier = Modifier.padding(10.dp).size(200.dp)){
+            AsyncImage(model = imageUri.value ?: patient!!.imageUrl,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.size(200.dp).clickable {
+                    launcher.launch("image/*")
+                })
 
-    }
-        Text(text = "Upload Picture", color = Color.Blue,
+        }
+        Text(text = "Tap to change picture", color = Color.DarkGray,
             fontStyle = FontStyle.Italic,
             fontWeight = FontWeight.Bold,
             textDecoration = TextDecoration.Underline)
-    OutlinedTextField(
-        value = name,
-        onValueChange = {name=it},
-        label = { Text(text = "Enter Patient Name")},
-        placeholder = { Text(text = "Please enter patient name")},
-        modifier = Modifier.fillMaxWidth()
-    )
+        OutlinedTextField(
+            value = name,
+            onValueChange = {name=it},
+            label = { Text(text = "Enter Patient Name")},
+            placeholder = { Text(text = "Please enter patient name")},
+            modifier = Modifier.fillMaxWidth()
+        )
         OutlinedTextField(
             value = gender,
             onValueChange = {gender=it},
@@ -122,32 +161,34 @@ fun AddPatientScreen(navController: NavController){
             modifier = Modifier.fillMaxWidth().height(150.dp), singleLine = false
         )
         OutlinedTextField(
-                value = phone_number,
-        onValueChange = {phone_number=it},
-        label = { Text(text = "Enter Patient's Phone Number")},
-        placeholder = { Text(text = "Please enter patient's phone number")},
-        modifier = Modifier.fillMaxWidth()
+            value = phone_number,
+            onValueChange = {phone_number=it},
+            label = { Text(text = "Enter Patient's Phone Number")},
+            placeholder = { Text(text = "Please enter patient's phone number")},
+            modifier = Modifier.fillMaxWidth()
         )
         Row (modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween){
-            Button(onClick = {navController.navigate(ROUTE_DASHBOARD)}) { Text(text = "GO BACK") }
-            Button(onClick = {patientViewModel.uploadPatient(imageUri.value,
-                name,
-                gender,
-                nationality,
-                age,
-                diagnosis,
-                phone_number,
-                context,
-                navController)})
-            { Text(text = "SAVE PATIENT") }
+            Button(onClick = {navController.popBackStack()}) { Text(text = "GO BACK") }
+            Button(onClick = {
+                patientViewModel.updatePatient(
+                    patientId,
+                    imageUri.value,
+                    name,
+                    gender,
+                    nationality,
+                    age,
+                    diagnosis,
+                    phone_number,
+                    context,
+                    navController)
+//                navController.navigate(ROUTE_VIEWPATIENTS)
+            })
+            { Text(text = "UPDATE PATIENT")
+            navController.navigate(ROUTE_DASHBOARD)}
         }
-}
+    }
 }
 
-@Preview(showBackground = true , showSystemUi = true)
-@Composable
-fun AddPatientScreenPreview(){
-    AddPatientScreen(rememberNavController())
 
-}
+
